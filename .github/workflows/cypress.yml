@@ -1,0 +1,35 @@
+name: Cypress Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cypress run
+        uses: cypress-io/github-action@v6
+        with:
+          browser: chrome
+          record: false
+          spec: cypress/e2e/automation-exercise-final.cy.js
+
+      - name: Generate Mochawesome report
+        if: always()
+        run: |
+          npm install --save-dev mochawesome mochawesome-merge mochawesome-report-generator
+          npx mochawesome-merge cypress/reports/mochawesome/*.json > cypress/reports/mochawesome/output.json
+          npx marge cypress/reports/mochawesome/output.json --reportDir cypress/reports/mochawesome --inline
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: cypress-test-results
+          path: cypress/reports/mochawesome
